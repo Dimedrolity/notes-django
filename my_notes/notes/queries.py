@@ -13,6 +13,6 @@ def get_list_note(search=None, order_by=None):
                     
         notes = Note.objects.filter(q_search)
         if order_by:
-            notes = notes.order_by('-date')
+            notes = notes.order_by(order_by)
 
         return notes
