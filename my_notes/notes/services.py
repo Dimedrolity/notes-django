@@ -5,17 +5,17 @@ from .commands import delete_note as delete_note_command, update_note as update_
 
 class NoteService():
 
-    def get(pk=None):
+    def get(self, pk=None):
         return get_note_query(pk)
 
-    def list(search=None, order_by=None):
+    def list(self, search=None, order_by=None):
         return get_list_note_query(search, order_by)
 
-    def create(data):
+    def create(self, data):
         return create_note_command(data)
 
-    def update(pk, data):
+    def update(self, pk, data):
         return update_note_command(pk, data)
         
-    def delete(pk):
+    def delete(self, pk):
         return delete_note_command(pk)
