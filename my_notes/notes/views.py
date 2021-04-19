@@ -35,22 +35,14 @@ class NoteViewSet(viewsets.ViewSet):
         return Response({'status': 'success'}, status=201)
     
     def partial_update(self, request, pk=None):
-        note = get_note_query(pk)
-        if not note:
-            return Response('Заметка с id = {} не найдена'.format(pk), status=404)
-        
-        errors = update_note_command(note, request.data)
+        errors = update_note_command(pk, request.data)
         if errors:
             return Response({'error': errors}, status=400)
 
         return Response('success', status=201)
 
     def destroy(self, request, pk=None):
-        note = get_note_query(pk)
-        if not note:
-            return Response('Заметка с id = {} не найдена'.format(pk), status=404) 
-        
-        errors = delete_note_command(note)
+        errors = delete_note_command(pk)
         if errors:
             return Response({'error': errors}, status=400)
 
