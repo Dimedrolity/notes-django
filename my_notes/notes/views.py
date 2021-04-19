@@ -1,11 +1,11 @@
-from django.db.models import Q
-
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework import viewsets
 
-from .models import Note
 from .serializers import NoteSerializer
+from .queries import get_note as get_note_query, get_list_note as get_list_note_query
+from .commands import delete_note as delete_note_command, update_note as update_note_command, \
+    create_note as create_note_command
 
 
 class NoteViewSet(viewsets.ViewSet):
@@ -16,46 +16,42 @@ class NoteViewSet(viewsets.ViewSet):
     parser_classes = [JSONParser]
 
     def list(self, request):
-        q_search = Q()
         search = request.GET.get('search')
-        if search:
-            search = search.lower()
-            q_search = Q(title__icontains=search, text__icontains=search)
-                    
-        notes = Note.objects.filter(q_search).order_by('-date')
+        notes = get_list_note_query(search, '-date')
         return Response(NoteSerializer(notes, many=True).data, status=200)
 
     def retrieve(self, request, pk=None):
-        note = Note.objects.filter(id=pk).first()
+        note = get_note_query(pk)
         if not note:
             return Response('Заметка с id = {} не найдена'.format(pk), status=404)
         
-        serializer = NoteSerializer(note)
-        return Response(serializer.data)
+        return Response(NoteSerializer(note).data)
 
     def create(self, request):
-        srl = NoteSerializer(data=request.data)
-        if srl.is_valid():
-            srl.save()
+        errors = create_note_command(request.data)
+        if errors:
+            return Response({'error': errors}, status=400)
            
         return Response({'status': 'success'}, status=201)
     
     def partial_update(self, request, pk=None):
-        note = Note.objects.filter(id=pk).first()
+        note = get_note_query(pk)
         if not note:
             return Response('Заметка с id = {} не найдена'.format(pk), status=404)
         
-        srl = NoteSerializer(note, data=request.data, partial=True)
-        if not srl.is_valid():
-            return Response({'error': srl.errors}, status=400)
-            
-        srl.save()
+        errors = update_note_command(note, request.data)
+        if errors:
+            return Response({'error': errors}, status=400)
+
         return Response('success', status=201)
 
     def destroy(self, request, pk=None):
-        note = Note.objects.filter(id=pk).first()
+        note = get_note_query(pk)
         if not note:
             return Response('Заметка с id = {} не найдена'.format(pk), status=404) 
-        note.delete()
-        return Response('success', status=201)
+        
+        errors = delete_note_command(note)
+        if errors:
+            return Response({'error': errors}, status=400)
 
+        return Response('success', status=201)
